@@ -8,6 +8,8 @@ public class pipeline_basic_asset : RenderPipelineAsset {
 
     public Color clearColor = Color.green;
 
+    public const int MAX_SHADOWCASTERS = 4;
+
 #if UNITY_EDITOR
     [UnityEditor.MenuItem("SRP/basic")]
     static void CreateBasicPipeline()
@@ -50,6 +52,7 @@ public class pipeline_basic_asset : RenderPipelineAsset {
                 var cmd = new CommandBuffer();
                 cmd.ClearRenderTarget(true, false, m_ClearColor);
                 renderContext.ExecuteCommandBuffer(cmd);
+                
                 cmd.Release();
 
                 var settings = new DrawRendererSettings(camera, new ShaderPassName("basic"));
@@ -62,7 +65,7 @@ public class pipeline_basic_asset : RenderPipelineAsset {
                 renderContext.DrawRenderers(cull.visibleRenderers, ref settings, filterSettings);
 
                 var shadowSettings = new DrawShadowsSettings(cull, 0);
-                renderContext.DrawShadows(ref shadowSettings);
+                //renderContext.DrawShadows(ref shadowSettings);
 
                 renderContext.DrawSkybox(camera);
 
