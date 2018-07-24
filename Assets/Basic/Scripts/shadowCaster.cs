@@ -8,9 +8,15 @@ public class shadowCaster : MonoBehaviour {
 
     static void CalcuShadowMatrices(Light l, Renderer r, out Matrix4x4 view, out Matrix4x4 proj, out float distance)
     {
+        float aspect = 1f;
+        float nearClip = 0.01f;
+        float farClip;
+        float fov;
+
         Vector3 pos = Vector3.zero;
         Vector3 forw = Vector3.forward;
         Quaternion rot = Quaternion.identity;
+        Matrix4x4 projMartix = Matrix4x4.identity;
 
         bool ortho = l.type == LightType.Area || l.type == LightType.Directional;
 
@@ -23,6 +29,10 @@ public class shadowCaster : MonoBehaviour {
             pos = l.type == LightType.Area ?
                 l.transform.position :
                 r.transform.position - (forw * r.bounds.extents.magnitude);
+        }
+        else
+        {
+            //TODO
         }
 
         Matrix4x4 worldToShadow = Matrix4x4.TRS(pos, rot, Vector3.one).inverse;
@@ -59,7 +69,25 @@ public class shadowCaster : MonoBehaviour {
         Vector3 min = new Vector3(minX, minY, minZ);
         Vector3 max = new Vector3(maxX, maxY, maxZ);
 
-        float farClip = l.type == LightType.Directional ? maxZ : l.range;
+        farClip = l.type == LightType.Directional ? maxZ : l.range;
 
+        if(ortho)
+        {
+            float size = 0.5f * (maxY - minY);
+            projMartix = Matrix4x4.Ortho(
+                -aspect * size, aspect * size,
+                -size, size, nearClip, farClip);
+        }
+        else
+        {
+            //TODO
+        }
+
+        //inverse Z
+        worldToShadow.SetRow(2, -worldToShadow.GetRow(2));
+
+        view = worldToShadow;
+        proj = projMartix;
+        distance = 1f / farClip;
     }
 }
