@@ -2,9 +2,47 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class shadowCaster : MonoBehaviour {
 
+    const int NO_SHADOW_INDEX = 0;
     public static List<shadowCaster> casters = new List<shadowCaster>(pipeline_basic_asset.MAX_SHADOWCASTERS);
+
+    [HideInInspector]
+    new public Renderer renderer;
+
+    int index = -1;
+    MaterialPropertyBlock mpb;
+
+    private void OnEnable()
+    {
+        print("onenable");
+        renderer = GetComponent<Renderer>();
+        mpb = new MaterialPropertyBlock();
+
+        if(casters.Count < pipeline_basic_asset.MAX_SHADOWCASTERS)
+        {
+            int i = AddCaster(this);
+            index = 1 << i;
+            ApplyPropertyBlock();
+        }
+        print(casters.Count);
+    }
+
+    private void OnDisable()
+    {
+        RemoveCaster(this);
+        index = -1;
+
+        renderer.GetPropertyBlock(mpb);
+        mpb.SetFloat(shaderLib.Variables.Renderer.SHADOW_INDEX, NO_SHADOW_INDEX);
+        renderer.SetPropertyBlock(mpb);
+    }
+
+    public void SetupShadowMatrices(int index, Light shadowLight, out Matrix4x4 view, out Matrix4x4 proj, out float d)
+    {
+        CalcuShadowMatrices(shadowLight, renderer, out view, out proj, out d);
+    }
 
     static void CalcuShadowMatrices(Light l, Renderer r, out Matrix4x4 view, out Matrix4x4 proj, out float distance)
     {
@@ -89,5 +127,28 @@ public class shadowCaster : MonoBehaviour {
         view = worldToShadow;
         proj = projMartix;
         distance = 1f / farClip;
+    }
+
+    static int AddCaster(shadowCaster c)
+    {
+        casters.Add(c);
+        return casters.Count - 1;
+    }
+
+    static void RemoveCaster(shadowCaster c)
+    {
+        casters.Remove(c);
+        for (int i = 0; i < casters.Count; i++)
+        {
+            casters[i].index = 1 << i;
+            casters[i].ApplyPropertyBlock();
+        }
+    }
+
+    void ApplyPropertyBlock()
+    {
+        renderer.GetPropertyBlock(mpb);
+        mpb.SetFloat(shaderLib.Variables.Renderer.SHADOW_INDEX, index);
+        renderer.SetPropertyBlock(mpb);
     }
 }

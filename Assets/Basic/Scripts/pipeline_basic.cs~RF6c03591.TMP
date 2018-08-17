@@ -46,7 +46,6 @@ public class pipeline_basic_instance : RenderPipeline
     {
         pipelineAsset = asset;
         m_ClearColor = asset.clearColor;
-        lightComparer = new LightComparer();
 
         shadowMapDesc = new RenderTextureDescriptor(asset.shadowMapSize, asset.shadowMapSize, RenderTextureFormat.RGHalf, 24)
         {
@@ -61,8 +60,6 @@ public class pipeline_basic_instance : RenderPipeline
 
         shadowRTID = new RenderTargetIdentifier(shaderLib.Variables.Global.id_ShadowTex);
         tempRTID = new RenderTargetIdentifier(shaderLib.Variables.Global.id_TempTex);
-
-        shadowMaterial = new Material(shaderLib.Shaders.DynamicShadow);
     }
 
     public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
@@ -78,9 +75,7 @@ public class pipeline_basic_instance : RenderPipeline
             cullingParams.shadowDistance = Mathf.Min(2000, camera.farClipPlane);
 
             CullResults cull = CullResults.Cull(ref cullingParams, renderContext);
-
-            #region light&shadow
-
+            
             List<VisibleLight> visibleLights = cull.visibleLights;
             Light shadowLight = SetupLightBuffers(renderContext, visibleLights, camera.worldToCameraMatrix);
 
@@ -91,16 +86,13 @@ public class pipeline_basic_instance : RenderPipeline
                 ShadowPass(renderContext, shadowLight);
 
             renderContext.SetupCameraProperties(camera);
-            #endregion
 
-            var cmd = commandBufferPool.Get("Clear");
+            var cmd = new CommandBuffer();
             cmd.ClearRenderTarget(true, false, m_ClearColor);
             renderContext.ExecuteCommandBuffer(cmd);
 
-            commandBufferPool.Release(cmd);
+            cmd.Release();
 
-
-            #region opaque
             var settings = new DrawRendererSettings(camera, new ShaderPassName("basic"));
             settings.sorting.flags = SortFlags.CommonOpaque;
 
@@ -113,17 +105,11 @@ public class pipeline_basic_instance : RenderPipeline
             var shadowSettings = new DrawShadowsSettings(cull, 0);
             //renderContext.DrawShadows(ref shadowSettings);
 
-            #endregion
-
             renderContext.DrawSkybox(camera);
-
-            #region transparent
 
             settings.sorting.flags = SortFlags.CommonTransparent;
             filterSettings.renderQueueRange = RenderQueueRange.transparent;
             renderContext.DrawRenderers(cull.visibleRenderers, ref settings, filterSettings);
-
-            #endregion
         }
         renderContext.Submit();
     }
@@ -206,54 +192,9 @@ public class pipeline_basic_instance : RenderPipeline
     private void ShadowPass(ScriptableRenderContext context, Light shadowLight)
     {
         CommandBuffer cmd = commandBufferPool.Get("Collect Shadow");
-        cmd.ClearRenderTarget(true, true, Color.clear);
         cmd.GetTemporaryRT(shaderLib.Variables.Global.id_ShadowTex, shadowMapDesc, FilterMode.Bilinear);
 
         bool isOrtho = shadowLight.type == LightType.Directional || shadowLight.type == LightType.Area;
         cmd.SetRenderTarget(shadowRTID);
-        cmd.SetViewport(new Rect(0, 0, shadowMapDesc.width, shadowMapDesc.height));
-        cmd.ClearRenderTarget(true, true, Color.clear, 1);
-
-        if (isOrtho)
-            cmd.EnableShaderKeyword(shaderLib.Keywords.SHADOW_PROJ_ORTHO);
-        else
-            cmd.DisableShaderKeyword(shaderLib.Keywords.SHADOW_PROJ_ORTHO);
-
-        float[] shadowDistances = new float[pipeline_basic_asset.MAX_SHADOWCASTERS];
-        float[] shadowBiases = new float[pipeline_basic_asset.MAX_SHADOWCASTERS];
-
-        Vector2 shadowQuadrant = new Vector2(shadowMapDesc.width / 2f, shadowMapDesc.height / 2f);
-
-        Rect[] pixelRects = new Rect[pipeline_basic_asset.MAX_SHADOWCASTERS]
-        {
-            new Rect(Vector2.zero, shadowQuadrant),
-            new Rect(new Vector2(0, shadowQuadrant.y), shadowQuadrant),
-            new Rect(new Vector2(shadowQuadrant.x, 0), shadowQuadrant),
-            new Rect(shadowQuadrant, shadowQuadrant)
-        };
-
-        Matrix4x4[] shadowMatrices = new Matrix4x4[pipeline_basic_asset.MAX_SHADOWCASTERS];
-        //Debug.Log(shadowCaster.casters.Count);
-        for (int i = 0; i < shadowCaster.casters.Count; i++)
-        {
-            Matrix4x4 view, proj;
-            float distance;
-            shadowCaster.casters[i].SetupShadowMatrices(i, shadowLight, out view, out proj, out distance);
-            cmd.SetViewProjectionMatrices(view, proj);
-            cmd.SetViewport(pixelRects[i]);
-            cmd.DrawRenderer(shadowCaster.casters[i].renderer, shadowMaterial, 0, shaderLib.Passes.SHADOW_PASS_ID);
-            shadowMatrices[i] = proj * view;
-            shadowDistances[i] = isOrtho ? 0 : distance;
-            shadowBiases[i] = shadowLight.shadowBias;
-        }
-
-        cmd.SetGlobalFloat(shaderLib.Variables.Global.SHADOW_INTENSITY, shadowLight.shadowStrength);
-        cmd.SetGlobalVector(shaderLib.Variables.Global.SHADOW_BIAS, new Vector4(shadowBiases[0], shadowBiases[1], shadowBiases[2], shadowBiases[3]));
-        cmd.SetGlobalVector(shaderLib.Variables.Global.SHADOW_DISTANCE, new Vector4(shadowDistances[0], shadowDistances[1], shadowDistances[2], shadowDistances[3]));
-        cmd.SetGlobalFloat(shaderLib.Variables.Global.SHADOW_COUNT, shadowCaster.casters.Count);
-        cmd.SetGlobalMatrixArray(shaderLib.Variables.Global.SHADOW_MATRICES, shadowMatrices);
-
-        context.ExecuteCommandBuffer(cmd);
-        commandBufferPool.Release(cmd);
     }
 }

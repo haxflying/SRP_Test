@@ -11,4 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: basic
   m_EditorClassIdentifier: Assembly-CSharp::pipeline_basic_asset
-  clearColor: {r: 0.34474012, g: 0.5754717, b: 0.34474012, a: 1}
+  clearColor: {r: 0, g: 1, b: 0, a: 1}
+  maxLights: 8
+  shadowMapSize: 2048

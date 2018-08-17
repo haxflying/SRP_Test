@@ -23,4 +23,5 @@ public class LightComparer : IComparer<VisibleLight>
         return Mathf.Abs((x.light.transform.position - camPos).sqrMagnitude).CompareTo(
             Mathf.Abs((y.light.transform.position - camPos).sqrMagnitude));
     }
+
 }
