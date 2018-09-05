@@ -101,7 +101,7 @@ public class pipeline_basic_instance : RenderPipeline
 
 
             #region opaque
-            var settings = new DrawRendererSettings(camera, new ShaderPassName("basic"));
+            var settings = new DrawRendererSettings(camera, new ShaderPassName(shaderLib.Passes.BASE));
             settings.sorting.flags = SortFlags.CommonOpaque;
 
             var filterSettings = new FilterRenderersSettings(true)

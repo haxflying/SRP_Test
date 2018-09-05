@@ -57,6 +57,8 @@ public static class shaderLib {
     public static class Passes
     {
         public const int SHADOW_PASS_ID = 0;
+        public const string BASE = "basic";
+        public const string ADD = "ForwardAdd";
     }
 
     
