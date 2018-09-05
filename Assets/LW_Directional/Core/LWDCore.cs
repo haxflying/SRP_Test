@@ -18,7 +18,6 @@ namespace MZ.LWD
     public struct LightData
     {
         public int pixelAdditionalLightsCount;
-        public int totalAdditionLightsCount;
         public int mainLightIndex;
         public List<VisibleLight> visibleLights;
         public List<int> visibleLocalLightIndices;
@@ -38,7 +37,6 @@ namespace MZ.LWD
     {
         public int directionalShadowAltasRes;
         public int directionalLightCascadeCount;
-        public Vector3 directionalLightCascades;
         public int bufferBitCount;
         public bool supportSoftShadows;
     }
