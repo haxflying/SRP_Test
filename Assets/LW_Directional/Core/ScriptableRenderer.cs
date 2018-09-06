@@ -6,6 +6,11 @@ using UnityEngine;
 
 public sealed class ScriptableRenderer
 {
-    
+
+
+    public void Clear()
+    {
+
+    }
 }
 

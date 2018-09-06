@@ -6,6 +6,6 @@ using System.Text;
 
 public interface IRendererSetup
 {
-
+    void Setup(ScriptableRenderer renderer);
 }
 

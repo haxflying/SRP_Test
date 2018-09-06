@@ -9,11 +9,11 @@ namespace MZ.LWD
 {
     public class LWDpipeline : RenderPipeline
     {
-        private bool SupportDynamicBatching = true;
-        private ShadowResolution ShadowAltasResolution = ShadowResolution._2048;
-        private float ShadowDistance = 50.0f;
-        private ShadowCascades ShadowCascades = ShadowCascades.FOUR_CASCADES;
-        private bool useSoftShadow = false;
+        private static bool SupportDynamicBatching = true;
+        private static ShadowResolution ShadowAltasResolution = ShadowResolution._2048;
+        private static float ShadowDistance = 50.0f;
+        private static ShadowCascades ShadowCascades = ShadowCascades.FOUR_CASCADES;
+        private static bool useSoftShadow = false;
 
         public LWDpipeline(LWDAsset asset)
         {
@@ -63,7 +63,7 @@ namespace MZ.LWD
                 return;
             }
 
-            cullingParam.shadowDistance = Mathf.Min(200f, camera.farClipPlane);
+            cullingParam.shadowDistance = Mathf.Min(ShadowDistance, camera.farClipPlane);
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 
@@ -72,6 +72,11 @@ namespace MZ.LWD
 #endif
             CullResults.Cull(ref cullingParam, context, ref cullResults);
             RenderingData renderingData;
+            InitializeRenderingData(ref cameraData, ref cullResults, out renderingData);
+
+            var setupToUse = setup;
+            
+            
         }
 
         static void InitializeCameraData(Camera camera, out CameraData cameraData)
@@ -86,7 +91,95 @@ namespace MZ.LWD
             cameraData.isDefaultViewport = (!(Math.Abs(cameraRect.x) > 0.0f || Math.Abs(cameraRect.y) > 0.0f ||
                 Math.Abs(cameraRect.width) < 1.0f || Math.Abs(cameraRect.height) < 1.0f));
 
-            cameraData.maxShadowDistance = 200f;         
+            cameraData.maxShadowDistance = ShadowDistance;         
+        }
+
+        static void InitializeRenderingData(ref CameraData cameraData, ref CullResults cullResults, out RenderingData renderingData)
+        {
+            List<VisibleLight> visibleLights = cullResults.visibleLights;
+            List<int> localLightIndices = new List<int>();
+
+            bool hasDirectionalShadowCastingLight = false;
+            bool hasLocalShadowCastingLight = false;
+
+            if (cameraData.maxShadowDistance > 0f)
+            {
+                for (int i = 0; i < visibleLights.Count; ++i)
+                {
+                    Light light = visibleLights[i].light;
+                    bool castShadow = light != null && light.shadows != LightShadows.None;
+                    if(visibleLights[i].lightType == LightType.Directional)
+                    {
+                        hasDirectionalShadowCastingLight |= castShadow;
+                    }
+                    else
+                    {
+                        hasLocalShadowCastingLight |= castShadow;
+                        localLightIndices.Add(i);
+                    }
+                }
+            }
+
+            renderingData.cullResults = cullResults;
+            renderingData.cameraData = cameraData;
+            InitializeLightData(visibleLights, 4, localLightIndices, out renderingData.lightData);
+            InitializeShadowData(hasDirectionalShadowCastingLight, hasLocalShadowCastingLight, out renderingData.shadowData);
+            renderingData.supportsDynamicBatching = SupportDynamicBatching;
+        }
+
+        static void InitializeShadowData(bool hasDirShadow, bool hasLocalShadow, out ShadowData shadowData)
+        {
+            shadowData.directionalShadowAltasRes = 2048;
+            switch (ShadowAltasResolution)
+            {
+                case ShadowResolution._1024:
+                    shadowData.directionalShadowAltasRes = 1024;break;
+                case ShadowResolution._2048:
+                    shadowData.directionalShadowAltasRes = 2048; break;
+                case ShadowResolution._4096:
+                    shadowData.directionalShadowAltasRes = 4096; break;
+            }
+
+            shadowData.directionalLightCascadeCount = 2;
+            switch (ShadowCascades)
+            {
+                case ShadowCascades.FOUR_CASCADES:
+                    shadowData.directionalLightCascadeCount = 4; break;
+                case ShadowCascades.TWO_CASCADES:
+                    shadowData.directionalLightCascadeCount = 2; break;
+                case ShadowCascades.NO_CASCADES:
+                    shadowData.directionalLightCascadeCount = 1; break;
+            }
+
+            shadowData.supportSoftShadows = useSoftShadow;
+            shadowData.bufferBitCount = 16;
+        }
+
+        static void InitializeLightData(List<VisibleLight> visibleLights, 
+            int maxLocalLightPerPass, List<int> localLightIndices, out LightData lightData)
+        {
+            int visibleLightCount = Math.Min(visibleLights.Count, 4);
+            lightData.mainLightIndex = GetMainLight(visibleLights);
+
+            int mainLightPresent = (lightData.mainLightIndex >= 0) ? 1 : 0;
+            int additionPixelLightCount = Math.Min(visibleLightCount - mainLightPresent, maxLocalLightPerPass);
+
+            lightData.pixelAdditionalLightsCount = additionPixelLightCount;
+            lightData.visibleLights = visibleLights;
+            lightData.visibleLocalLightIndices = localLightIndices;
+        }
+
+        static int GetMainLight(List<VisibleLight> visibleLights)
+        {
+            for (int i = 0; i < visibleLights.Count; i++)
+            {
+                VisibleLight vl = visibleLights[i];
+                if(vl.light.shadows != LightShadows.None && vl.lightType == LightType.Directional)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         public void SortCameras(Camera[] cameras)
