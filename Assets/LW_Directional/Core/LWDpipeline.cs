@@ -74,7 +74,7 @@ namespace MZ.LWD
             RenderingData renderingData;
             InitializeRenderingData(ref cameraData, ref cullResults, out renderingData);
 
-            var setupToUse = setup;
+            IRendererSetup setupToUse = setup;
             
             
         }

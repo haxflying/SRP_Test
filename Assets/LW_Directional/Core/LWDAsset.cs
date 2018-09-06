@@ -17,6 +17,11 @@ namespace MZ.LWD
         public ShadowCascades ShadowCascades = ShadowCascades.FOUR_CASCADES;
         public bool useSoftShadow = false;
 
+        [Header("Shaders")]
+        public Shader opaqueForward;
+        public Shader screenSpaceShadow;
+        public Shader directionalShadow;
+
 #if UNITY_EDITOR
         [MenuItem("Assets/Create/Rendering/LWD Asset")]
         static void CreateLWDpipeline()

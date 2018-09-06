@@ -35,5 +35,40 @@ public abstract class ScriptableRenderPass
             settings.flags |= DrawRendererFlags.EnableDynamicBatching;
         return settings;
     }
+
+    protected static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier colorAttachment, RenderBufferLoadAction colorLoadAction,
+        RenderBufferStoreAction colorStoreAction, ClearFlag clearFlag, Color clearColor, TextureDimension dimension)
+    {
+        if (dimension == TextureDimension.Tex2DArray)
+        {
+            cmd.SetRenderTarget(colorAttachment, 0, CubemapFace.Unknown, -1);
+            cmd.ClearRenderTarget(clearFlag == ClearFlag.Depth || clearFlag == ClearFlag.All,
+                clearFlag == ClearFlag.Color || clearFlag == ClearFlag.All, clearColor);
+        }
+        else
+        {
+            cmd.SetRenderTarget(colorAttachment, colorLoadAction, colorStoreAction);
+            cmd.ClearRenderTarget(clearFlag == ClearFlag.Depth || clearFlag == ClearFlag.All,
+                clearFlag == ClearFlag.Color || clearFlag == ClearFlag.All, clearColor);
+        }
+    }
+
+    protected static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier colorAttachment, RenderBufferLoadAction colorLoadAction,
+        RenderBufferStoreAction colorStoreAction, RenderTargetIdentifier depthAttachment, RenderBufferLoadAction depthLoadAction,
+        RenderBufferStoreAction depthStoreAction, ClearFlag clearFlag, Color clearColor, TextureDimension dimension)
+    {
+        if (dimension == TextureDimension.Tex2DArray)
+        {
+            cmd.SetRenderTarget(colorAttachment, depthAttachment, 0, CubemapFace.Unknown, -1);
+            cmd.ClearRenderTarget(clearFlag == ClearFlag.Depth || clearFlag == ClearFlag.All,
+                clearFlag == ClearFlag.Color || clearFlag == ClearFlag.All, clearColor);
+        }
+        else
+        {
+            cmd.SetRenderTarget(colorAttachment, colorLoadAction, colorStoreAction, depthAttachment, depthLoadAction, depthStoreAction);
+            cmd.ClearRenderTarget(clearFlag == ClearFlag.Depth || clearFlag == ClearFlag.All,
+                clearFlag == ClearFlag.Color || clearFlag == ClearFlag.All, clearColor);
+        }
+    }
 }
 
