@@ -57,4 +57,10 @@ namespace MZ.LWD
         _2048 = 2048,
         _4096 = 4096
     }
+
+    public static class KeywordStrings
+    {
+        public static string SoftShadows = "SOFTSHADOW";
+        public static string CascadeShadows = "CASCADED";
+    }
 }

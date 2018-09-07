@@ -138,9 +138,58 @@ class DirectionalShadowPass : ScriptableRenderPass
             bool success = false;
             for (int i = 0; i < m_ShadowCasterCascadesCount; i++)
             {
-                
+                success = CoreShadowUtils.ExtractDirectionalLightMatrix(ref cullResults, ref shadowData, shadowLightIndex,
+                    i, shadowResolution, shadowNearPlane, out m_CascadeSplitDistances[i], out m_CascadeSlices[i],out view, out proj);
+                if(success)
+                {
+                    settings.splitData.cullingSphere = m_CascadeSplitDistances[i];
+                    CoreShadowUtils.SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution);
+                    CoreShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[i], ref settings, proj, view);
+                }
+
             }
+
+            if (success)
+                SetupDirectionalShadowReceiverConstants(cmd, ref shadowData, shadowLight);
         }
+        context.ExecuteCommandBuffer(cmd);
+        commandBufferPool.Release(cmd);
+    }
+
+    void SetupDirectionalShadowReceiverConstants(CommandBuffer cmd, ref ShadowData shadowData, VisibleLight shadowLight)
+    {
+        Light light = shadowLight.light;
+
+        int cascadeCount = m_ShadowCasterCascadesCount;
+        for (int i = 0; i < k_MaxCascades; i++)
+        {
+            m_DirectionalShadowMatrices[i] = (cascadeCount >= i) ? m_CascadeSlices[i].shadowTransform : Matrix4x4.identity;
+        }
+
+        Matrix4x4 noOpShadowMatrix = Matrix4x4.zero;
+        noOpShadowMatrix.m33 = (SystemInfo.usesReversedZBuffer) ? 1f : 0f;
+        m_DirectionalShadowMatrices[k_MaxCascades] = noOpShadowMatrix;
+
+        float invShadowAltasRes = 1f / shadowData.directionalShadowAltasRes;
+        float invHalfShadowAltaRes = 0.5f * invShadowAltasRes;
+        cmd.SetGlobalTexture(destination.id, m_DirectionalShadowmapTexture);
+        cmd.SetGlobalMatrixArray(DirectionalShadowConstantBuffer._WorldToShadow, m_DirectionalShadowMatrices);
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0f, 0f, 0f));
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._DirShadowSplitSpheres0, m_CascadeSplitDistances[0]);
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._DirShadowSplitSpheres1, m_CascadeSplitDistances[1]);
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._DirShadowSplitSpheres2, m_CascadeSplitDistances[2]);
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._DirShadowSplitSpheres3, m_CascadeSplitDistances[3]);
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._DirShadowSplitSphereRadii, new Vector4(
+            m_CascadeSplitDistances[0].w * m_CascadeSplitDistances[0].w,
+            m_CascadeSplitDistances[1].w * m_CascadeSplitDistances[1].w,
+            m_CascadeSplitDistances[2].w * m_CascadeSplitDistances[2].w,
+            m_CascadeSplitDistances[3].w * m_CascadeSplitDistances[3].w));
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowOffset0, new Vector4(-invHalfShadowAltaRes, -invHalfShadowAltaRes, 0f, 0f));
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowOffset1, new Vector4(invHalfShadowAltaRes, -invHalfShadowAltaRes, 0f, 0f));
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowOffset2, new Vector4(-invHalfShadowAltaRes, invHalfShadowAltaRes, 0f, 0f));
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowOffset3, new Vector4(invHalfShadowAltaRes, invHalfShadowAltaRes, 0f, 0f));
+        cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowAltasRes, invShadowAltasRes,
+            shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes));
     }
 }
 

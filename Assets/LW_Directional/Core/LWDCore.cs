@@ -117,8 +117,126 @@ namespace MZ.LWD
         }
     }
 
+    public static class CoreShadowUtils
+    {
+        public static bool ExtractDirectionalLightMatrix(ref CullResults cullResults, ref ShadowData shadowData, 
+            int shadowLightIndex, int cascadeIndex, int shadowResolution, float shadowNearPlane, 
+            out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
+        {
+            ShadowSplitData splitData;
+            Vector3 splitRotio = Vector3.one;
+            bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
+                shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
+
+            cascadeSplitDistance = splitData.cullingSphere;
+            shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
+            shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
+            shadowSliceData.resolution = shadowResolution;
+            shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
+
+            if (shadowData.directionalLightCascadeCount > 1)
+                ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes);
+
+            return success;
+        }
+
+        public static void ApplySliceTransform(ref ShadowSliceData shadowSliceData, int altaWidth, int altaHeight)
+        {
+            Matrix4x4 sliceTransform = Matrix4x4.identity;
+            float oneOverAltaWidht = 1f / altaWidth;
+            float oneOverAltaHeight = 1f / altaHeight;
+
+            sliceTransform.m00 = shadowSliceData.resolution * oneOverAltaWidht;
+            sliceTransform.m11 = shadowSliceData.resolution * oneOverAltaHeight;
+            sliceTransform.m03 = shadowSliceData.offsetX * oneOverAltaWidht;
+            sliceTransform.m13 = shadowSliceData.offsetY * oneOverAltaHeight;
+
+            shadowSliceData.shadowTransform = sliceTransform * shadowSliceData.shadowTransform;
+        }
+
+        static Matrix4x4 GetShadowTransform(Matrix4x4 proj, Matrix4x4 view)
+        {
+            if(SystemInfo.usesReversedZBuffer)
+            {
+                proj.m20 = -proj.m20;
+                proj.m21 = -proj.m21;
+                proj.m22 = -proj.m22;
+                proj.m23 = -proj.m23;
+            }
+
+            Matrix4x4 worldToShadow = proj * view;
+            var textureScaleAndBias = Matrix4x4.identity;
+            textureScaleAndBias.m00 = 0.5f;
+            textureScaleAndBias.m11 = 0.5f;
+            textureScaleAndBias.m22 = 0.5f;
+            textureScaleAndBias.m03 = 0.5f;
+            textureScaleAndBias.m23 = 0.5f;
+            textureScaleAndBias.m13 = 0.5f;
+
+            return textureScaleAndBias * worldToShadow;
+        }
+
+        public static void SetupShadowCasterConstants(CommandBuffer cmd, ref VisibleLight visibleLight, Matrix4x4 proj, float cascadeRes)
+        {
+            Light light = visibleLight.light;
+            float bias = 0f;
+            float normalBias = 0f;
+
+            const float kernelRadius = 3.65f;
+
+            if(visibleLight.lightType == LightType.Directional)
+            {
+                float sign = (SystemInfo.usesReversedZBuffer) ? 1f : -1f;
+                bias = light.shadowBias * proj.m22 * sign;
+
+                double frustumWidth = 2.0 / (double)proj.m00;
+                double frustumHeight = 2.0 / (double)proj.m11;
+                float texelSizeX = (float)(frustumWidth / (double)cascadeRes);
+                float texelSizeY = (float)(frustumHeight / (double)cascadeRes);
+                float texelSize = Mathf.Max(texelSizeX, texelSizeY);
+
+                normalBias = -light.shadowNormalBias * texelSize * kernelRadius;
+            }
+
+            Vector3 lightDirection = -visibleLight.localToWorld.GetColumn(2);
+            cmd.SetGlobalVector("_ShadowBias", new Vector4(bias, normalBias, 0f, 0f));
+            cmd.SetGlobalVector("_LightDirection", lightDirection);
+        }
+
+        public static void RenderShadowSlice(CommandBuffer cmd, ref ScriptableRenderContext context, ref ShadowSliceData shadowSliceData,
+            ref DrawShadowsSettings settings, Matrix4x4 proj, Matrix4x4 view)
+        {
+            cmd.SetViewport(new Rect(shadowSliceData.offsetX, shadowSliceData.offsetY, shadowSliceData.resolution, shadowSliceData.resolution));
+            cmd.EnableScissorRect(new Rect(shadowSliceData.offsetX + 4, shadowSliceData.offsetY + 4, shadowSliceData.resolution - 8, shadowSliceData.resolution - 8));
+
+            cmd.SetViewProjectionMatrices(view, proj);
+            context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
+            context.DrawShadows(ref settings);
+            cmd.DisableScissorRect();
+            context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
+        }
+    }
+
     public static class CoreUtils
     {
+        public static void SetKeyword(CommandBuffer cmd, string keyword, bool state)
+        {
+            if (state)
+                cmd.EnableShaderKeyword(keyword);
+            else
+                cmd.DisableShaderKeyword(keyword);
+        }
+
+        public static void Setkeyword(Material m, string keyword, bool state)
+        {
+            if (state)
+                m.EnableKeyword(keyword);
+            else
+                m.DisableKeyword(keyword);
+        }
+
         public static Material CreateEngineMaterial(string shaderPath)
         {
             Shader shader = Shader.Find(shaderPath);
