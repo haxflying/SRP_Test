@@ -15,6 +15,18 @@ namespace MZ.LWD
         private static ShadowCascades ShadowCascades = ShadowCascades.FOUR_CASCADES;
         private static bool useSoftShadow = false;
 
+        private static IRendererSetup m_DefaultRenderSetup;
+        private static IRendererSetup defaultRenderSetup
+        {
+            get
+            {
+                if (m_DefaultRenderSetup == null)
+                    m_DefaultRenderSetup = new DufaultRendererSetup();
+
+                return m_DefaultRenderSetup;
+            }
+        }
+
         public LWDpipeline(LWDAsset asset)
         {
             Shader.globalRenderPipeline = "LWD";
@@ -75,8 +87,16 @@ namespace MZ.LWD
             InitializeRenderingData(ref cameraData, ref cullResults, out renderingData);
 
             IRendererSetup setupToUse = setup;
-            
-            
+            if (setupToUse == null)
+                setupToUse = defaultRenderSetup;
+
+            renderer.Clear();
+            setupToUse.Setup(renderer, ref renderingData);
+            renderer.Execute(context, ref renderingData);
+
+            context.ExecuteCommandBuffer(cmd);
+            commandBufferPool.Release(cmd);
+            context.Submit();
         }
 
         static void InitializeCameraData(Camera camera, out CameraData cameraData)

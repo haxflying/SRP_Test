@@ -50,7 +50,8 @@ public class ScreenSpaceShadowResolvePass : ScriptableRenderPass
 
     void SetShadowCollectPassKeywords(CommandBuffer cmd, ref VisibleLight shadowLight, ref ShadowData shadowData)
     {
-        
+        CoreUtils.SetKeyword(cmd, KeywordStrings.SoftShadows, shadowData.supportSoftShadows && shadowLight.light.shadows == LightShadows.Soft);
+        CoreUtils.SetKeyword(cmd, KeywordStrings.CascadeShadows, shadowData.directionalLightCascadeCount > 1);
     }
 }
 

@@ -12,6 +12,7 @@ public class DufaultRendererSetup : IRendererSetup
     private DirectionalShadowPass m_DirectionalShadowPass;
     private ScreenSpaceShadowResolvePass m_ScreenSpaceShadowPass;
     private DepthOnlyPass m_DepthOnlyPass;
+    private SetupLWDConstantsPass m_SetupLWDConstants;
 
     private RenderTargetHandle ColorAttachment;
     private RenderTargetHandle DepthAttachment;
@@ -52,8 +53,6 @@ public class DufaultRendererSetup : IRendererSetup
         RenderTextureDescriptor shadowDesc = baseDesc;
         shadowDesc.dimension = TextureDimension.Tex2D;
 
-        bool requireDepthPass = true;
-
         m_DirectionalShadowPass.Setup(DirectionalShadowmap);
         renderer.EnqueuePass(m_DirectionalShadowPass);
 
@@ -62,6 +61,9 @@ public class DufaultRendererSetup : IRendererSetup
 
         m_ScreenSpaceShadowPass.Setup(baseDesc, ScreenSpaceShadowmap);
         renderer.EnqueuePass(m_ScreenSpaceShadowPass);
+
+        m_SetupLWDConstants.Setup();
+        renderer.EnqueuePass(m_SetupLWDConstants);
     }
 }
 
