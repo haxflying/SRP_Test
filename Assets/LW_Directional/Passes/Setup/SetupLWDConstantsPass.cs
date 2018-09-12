@@ -23,6 +23,11 @@ class SetupLWDConstantsPass : ScriptableRenderPass
     Vector4 k_DefaultLightPosition = new Vector4(0f, 0f, 1f, 0f);
     Vector4 k_DefaultLightColor = Color.black;
 
+    public override string GetName()
+    {
+        return k_SetupLightConstants;
+    }
+
     public SetupLWDConstantsPass()
     {
         LightConstantBuffer._MainLightPostion = Shader.PropertyToID("_MainLightPosition");

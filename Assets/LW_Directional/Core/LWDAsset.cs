@@ -26,13 +26,13 @@ namespace MZ.LWD
         [MenuItem("Assets/Create/Rendering/LWD Asset")]
         static void CreateLWDpipeline()
         {
-            var instance = ScriptableObject.CreateInstance<pipeline_basic_asset>();
+            var instance = ScriptableObject.CreateInstance<LWDAsset>();
             UnityEditor.AssetDatabase.CreateAsset(instance, "Assets/pipeline_assets/LWD.asset");
         }
 #endif
         protected override IRenderPipeline InternalCreatePipeline()
         {
-            throw new NotImplementedException();
+            return new LWDpipeline(this);
         }
     }
 

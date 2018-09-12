@@ -18,6 +18,11 @@ public class RenderOpaqueForwardPass : ScriptableRenderPass
     Color clearColor { get; set; }
     RendererConfiguration rendererConfig;
 
+    public override string GetName()
+    {
+        return k_RenderOpaqueTag;
+    }
+
     public RenderOpaqueForwardPass()
     {
         RegisterShaderPassName("LWD_Forward");

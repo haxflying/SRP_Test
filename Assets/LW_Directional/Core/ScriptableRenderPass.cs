@@ -11,6 +11,11 @@ public abstract class ScriptableRenderPass
 {
     private List<ShaderPassName> m_ShaderPassNames = new List<ShaderPassName>();
 
+    public virtual string GetName()
+    {
+        return "default parent";
+    }
+
     protected void RegisterShaderPassName(string passName)
     {
         m_ShaderPassNames.Add(new ShaderPassName(passName));
