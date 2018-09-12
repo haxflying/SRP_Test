@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 using MZ.LWD;
 
 public class DufaultRendererSetup : IRendererSetup
@@ -32,6 +33,7 @@ public class DufaultRendererSetup : IRendererSetup
         m_DirectionalShadowPass = new DirectionalShadowPass();
         m_ScreenSpaceShadowPass = new ScreenSpaceShadowResolvePass();
         m_DepthOnlyPass = new DepthOnlyPass();
+        m_SetupLWDConstants = new SetupLWDConstantsPass();
 
         ColorAttachment.Init("_CameraColorTexture");
         DepthAttachment.Init("_CameraDepthAttachment");
@@ -50,20 +52,28 @@ public class DufaultRendererSetup : IRendererSetup
         Camera camera = renderingData.cameraData.camera;
 
         RenderTextureDescriptor baseDesc = CoreUtils.CreateRenderTextureDescriptor(ref renderingData.cameraData);
-        RenderTextureDescriptor shadowDesc = baseDesc;
-        shadowDesc.dimension = TextureDimension.Tex2D;
+        //RenderTextureDescriptor shadowDesc = baseDesc;
+        //shadowDesc.dimension = TextureDimension.Tex2D;
 
-        m_DirectionalShadowPass.Setup(DirectionalShadowmap);
-        renderer.EnqueuePass(m_DirectionalShadowPass);
+        //m_DirectionalShadowPass.Setup(DirectionalShadowmap);
+        //renderer.EnqueuePass(m_DirectionalShadowPass);
 
-        m_DepthOnlyPass.Setup(baseDesc, DepthTexture, 1);
-        renderer.EnqueuePass(m_DepthOnlyPass);
+        //m_DepthOnlyPass.Setup(baseDesc, DepthTexture, 1);
+        //renderer.EnqueuePass(m_DepthOnlyPass);
 
-        m_ScreenSpaceShadowPass.Setup(baseDesc, ScreenSpaceShadowmap);
-        renderer.EnqueuePass(m_ScreenSpaceShadowPass);
+        //m_ScreenSpaceShadowPass.Setup(baseDesc, ScreenSpaceShadowmap);
+        //renderer.EnqueuePass(m_ScreenSpaceShadowPass);
 
-        m_SetupLWDConstants.Setup();
-        renderer.EnqueuePass(m_SetupLWDConstants);
+        //m_SetupLWDConstants.Setup();
+        //renderer.EnqueuePass(m_SetupLWDConstants);
+
+        RenderTargetHandle colorHandle = RenderTargetHandle.CameraTarget;
+        RenderTargetHandle depthHandle = RenderTargetHandle.CameraTarget;
+
+        RendererConfiguration rendererConfig = RendererConfiguration.None;
+
+        m_RenderOpaqueForwardPass.Setup(baseDesc, colorHandle, depthHandle, ScriptableRenderer.GetClearFlag(camera), camera.backgroundColor, rendererConfig);
+        renderer.EnqueuePass(m_RenderOpaqueForwardPass);
     }
 }
 

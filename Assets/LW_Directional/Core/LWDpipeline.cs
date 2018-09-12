@@ -27,6 +27,9 @@ namespace MZ.LWD
             }
         }
 
+        ScriptableRenderer m_Renderer;
+        CullResults m_Cullresults;        
+
         public LWDpipeline(LWDAsset asset)
         {
             Shader.globalRenderPipeline = "LWD";
@@ -36,6 +39,8 @@ namespace MZ.LWD
             ShadowDistance = asset.ShadowDistance;
             ShadowCascades = asset.ShadowCascades;
             useSoftShadow = asset.useSoftShadow;
+
+            m_Renderer = new ScriptableRenderer(asset);
         }
 
         public override void Dispose()
@@ -43,6 +48,8 @@ namespace MZ.LWD
             base.Dispose();
             Shader.globalRenderPipeline = "";
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
+
+            m_Renderer.Dispose();
         }
 
         public override void Render(ScriptableRenderContext context, Camera[] cameras)
@@ -55,9 +62,8 @@ namespace MZ.LWD
             {
                 BeginCameraRendering(camera);
 
-                
+                RenderSingleCamera(context, camera, ref m_Cullresults, camera.GetComponent<IRendererSetup>(), m_Renderer);              
             }
-
         }
 
         public static void RenderSingleCamera(ScriptableRenderContext context, Camera camera, 

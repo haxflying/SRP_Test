@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99030f49181568e42bb0953b9cf8d761, type: 3}
+  m_Name: LWD
+  m_EditorClassIdentifier: 
+  SupportDynamicBatching: 1
+  ShadowAltasResolution: 2048
+  ShadowDistance: 50
+  ShadowCascades: 2
+  useSoftShadow: 0
+  opaqueForward: {fileID: 4800000, guid: 144f883a42d9e2f4b95abd7597274661, type: 3}
+  screenSpaceShadow: {fileID: 4800000, guid: 289160f0846aa5940ae169da14f9e346, type: 3}
+  directionalShadow: {fileID: 4800000, guid: 0e03c0f9e0009664dae2c47d9b7c7896, type: 3}

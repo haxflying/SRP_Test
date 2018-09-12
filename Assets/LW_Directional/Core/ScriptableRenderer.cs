@@ -24,6 +24,7 @@ public sealed class ScriptableRenderer
     {
         for (int i = 0; i < m_ActiveRenderPassQueue.Count; i++)
         {
+            Debug.Log(m_ActiveRenderPassQueue[i].GetName());
             m_ActiveRenderPassQueue[i].Execute(this, context, ref renderingData);
         }
 
@@ -66,6 +67,20 @@ public sealed class ScriptableRenderer
         {
             CoreUtils.Destroy(m_Materials[i]);
         }
+    }
+
+    public static ClearFlag GetClearFlag(Camera camera)
+    {
+        ClearFlag clearFlag = ClearFlag.None;
+        CameraClearFlags cameraClearFlags = camera.clearFlags;
+        if (cameraClearFlags != CameraClearFlags.Nothing)
+        {
+            clearFlag |= ClearFlag.Depth;
+            if (cameraClearFlags == CameraClearFlags.Color || cameraClearFlags == CameraClearFlags.Skybox)
+                clearFlag |= ClearFlag.Color;
+        }
+
+        return clearFlag;
     }
     
 }
