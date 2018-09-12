@@ -18,9 +18,8 @@ namespace MZ.LWD
         public bool useSoftShadow = false;
 
         [Header("Shaders")]
-        public Shader opaqueForward;
+        public Shader blitShader;
         public Shader screenSpaceShadow;
-        public Shader directionalShadow;
 
 #if UNITY_EDITOR
         [MenuItem("Assets/Create/Rendering/LWD Asset")]

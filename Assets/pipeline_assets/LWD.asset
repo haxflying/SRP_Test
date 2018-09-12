@@ -16,6 +16,5 @@ MonoBehaviour:
   ShadowDistance: 50
   ShadowCascades: 2
   useSoftShadow: 0
-  opaqueForward: {fileID: 4800000, guid: 144f883a42d9e2f4b95abd7597274661, type: 3}
+  blitShader: {fileID: 4800000, guid: 4a276adfd6bbcae458798cc6e4d364b3, type: 3}
   screenSpaceShadow: {fileID: 4800000, guid: 289160f0846aa5940ae169da14f9e346, type: 3}
-  directionalShadow: {fileID: 4800000, guid: 0e03c0f9e0009664dae2c47d9b7c7896, type: 3}

@@ -14,8 +14,7 @@ public sealed class ScriptableRenderer
     {
         m_Materials = new[]
         {
-            CoreUtils.CreateEngineMaterial(asset.opaqueForward),
-            CoreUtils.CreateEngineMaterial(asset.directionalShadow),
+            CoreUtils.CreateEngineMaterial(asset.blitShader),
             CoreUtils.CreateEngineMaterial(asset.screenSpaceShadow),
         };
     }
@@ -24,7 +23,7 @@ public sealed class ScriptableRenderer
     {
         for (int i = 0; i < m_ActiveRenderPassQueue.Count; i++)
         {
-            Debug.Log(m_ActiveRenderPassQueue[i].GetName());
+            //Debug.Log(m_ActiveRenderPassQueue[i].GetName());
             m_ActiveRenderPassQueue[i].Execute(this, context, ref renderingData);
         }
 
@@ -42,6 +41,18 @@ public sealed class ScriptableRenderer
     public void EnqueuePass(ScriptableRenderPass pass)
     {
         m_ActiveRenderPassQueue.Add(pass);
+    }
+
+    public Material GetMaterial(MaterialHandles handle)
+    {
+        int handleID = (int)handle;
+        if(handleID >= m_Materials.Length)
+        {
+            Debug.LogError(string.Format("Material {0} is not registered.",
+                    Enum.GetName(typeof(MaterialHandles), handleID)));
+            return null;
+        }
+        return m_Materials[handleID];
     }
 
     public void Clear()

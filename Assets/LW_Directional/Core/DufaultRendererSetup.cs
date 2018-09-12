@@ -13,7 +13,9 @@ public class DufaultRendererSetup : IRendererSetup
     private DirectionalShadowPass m_DirectionalShadowPass;
     private ScreenSpaceShadowResolvePass m_ScreenSpaceShadowPass;
     private DepthOnlyPass m_DepthOnlyPass;
+    private SetupForwardRenderingPass m_SetupForwardRenderingPass;
     private SetupLWDConstantsPass m_SetupLWDConstants;
+    private FinalBlitPass m_FinalBlitPass;
 
     private RenderTargetHandle ColorAttachment;
     private RenderTargetHandle DepthAttachment;
@@ -33,7 +35,9 @@ public class DufaultRendererSetup : IRendererSetup
         m_DirectionalShadowPass = new DirectionalShadowPass();
         m_ScreenSpaceShadowPass = new ScreenSpaceShadowResolvePass();
         m_DepthOnlyPass = new DepthOnlyPass();
+        m_SetupForwardRenderingPass = new SetupForwardRenderingPass();
         m_SetupLWDConstants = new SetupLWDConstantsPass();
+        m_FinalBlitPass = new FinalBlitPass();
 
         ColorAttachment.Init("_CameraColorTexture");
         DepthAttachment.Init("_CameraDepthAttachment");
@@ -58,6 +62,8 @@ public class DufaultRendererSetup : IRendererSetup
         //m_DirectionalShadowPass.Setup(DirectionalShadowmap);
         //renderer.EnqueuePass(m_DirectionalShadowPass);
 
+        renderer.EnqueuePass(m_SetupForwardRenderingPass);
+
         //m_DepthOnlyPass.Setup(baseDesc, DepthTexture, 1);
         //renderer.EnqueuePass(m_DepthOnlyPass);
 
@@ -74,6 +80,9 @@ public class DufaultRendererSetup : IRendererSetup
 
         m_RenderOpaqueForwardPass.Setup(baseDesc, colorHandle, depthHandle, ScriptableRenderer.GetClearFlag(camera), camera.backgroundColor, rendererConfig);
         renderer.EnqueuePass(m_RenderOpaqueForwardPass);
+
+        //m_FinalBlitPass.Setup(baseDesc, colorHandle);
+        //renderer.EnqueuePass(m_FinalBlitPass);
     }
 }
 

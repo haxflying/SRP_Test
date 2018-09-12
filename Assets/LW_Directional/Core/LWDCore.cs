@@ -20,6 +20,15 @@ namespace MZ.LWD
         All = Depth | Color
     }
 
+    public enum MaterialHandles
+    {
+        //Error,
+        //DepthCopy,
+        //Sampling,
+        Blit,
+        ScreenSpacceShadow,
+    }
+
     public struct RenderingData
     {
         public CullResults cullResults;
