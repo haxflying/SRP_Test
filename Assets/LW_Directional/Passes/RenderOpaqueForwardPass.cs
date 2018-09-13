@@ -25,7 +25,7 @@ public class RenderOpaqueForwardPass : ScriptableRenderPass
 
     public RenderOpaqueForwardPass()
     {
-        RegisterShaderPassName("LWD_Forward");
+        RegisterShaderPassName("ForwardBase");
 
         m_OpaqueFilterSettings = new FilterRenderersSettings(true)
         {

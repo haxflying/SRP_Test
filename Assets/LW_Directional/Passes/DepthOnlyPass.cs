@@ -55,7 +55,7 @@ public class DepthOnlyPass : ScriptableRenderPass
             var drawSetting = CreateDrawRendererSettings(renderingData.cameraData.camera, SortFlags.CommonOpaque, RendererConfiguration.None, renderingData.supportsDynamicBatching);
             context.DrawRenderers(renderingData.cullResults.visibleRenderers, ref drawSetting, opaqueFilterSettings);
         }
-        
+        context.ExecuteCommandBuffer(cmd);
         commandBufferPool.Release(cmd);
     }
 }

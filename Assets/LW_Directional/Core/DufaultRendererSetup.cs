@@ -41,7 +41,7 @@ public class DufaultRendererSetup : IRendererSetup
 
         ColorAttachment.Init("_CameraColorTexture");
         DepthAttachment.Init("_CameraDepthAttachment");
-        DepthTexture.Init("_DepthTexture");
+        DepthTexture.Init("_CameraDepthTexture");
         OpaqueColor.Init("_CameraOpaqueTexture");
         DirectionalShadowmap.Init("_DirectionalShadowmapTexture");
         ScreenSpaceShadowmap.Init("_ScreenSpaceShadowmapTexture");
@@ -56,16 +56,16 @@ public class DufaultRendererSetup : IRendererSetup
         Camera camera = renderingData.cameraData.camera;
 
         RenderTextureDescriptor baseDesc = CoreUtils.CreateRenderTextureDescriptor(ref renderingData.cameraData);
-        //RenderTextureDescriptor shadowDesc = baseDesc;
-        //shadowDesc.dimension = TextureDimension.Tex2D;
+        RenderTextureDescriptor shadowDesc = baseDesc;
+        shadowDesc.dimension = TextureDimension.Tex2D;
 
-        //m_DirectionalShadowPass.Setup(DirectionalShadowmap);
-        //renderer.EnqueuePass(m_DirectionalShadowPass);
+        m_DirectionalShadowPass.Setup(DirectionalShadowmap);
+        renderer.EnqueuePass(m_DirectionalShadowPass);
 
         renderer.EnqueuePass(m_SetupForwardRenderingPass);
 
-        //m_DepthOnlyPass.Setup(baseDesc, DepthTexture, 1);
-        //renderer.EnqueuePass(m_DepthOnlyPass);
+        m_DepthOnlyPass.Setup(baseDesc, DepthTexture, 1);
+        renderer.EnqueuePass(m_DepthOnlyPass);
 
         //m_ScreenSpaceShadowPass.Setup(baseDesc, ScreenSpaceShadowmap);
         //renderer.EnqueuePass(m_ScreenSpaceShadowPass);

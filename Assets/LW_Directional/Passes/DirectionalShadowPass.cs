@@ -42,7 +42,7 @@ class DirectionalShadowPass : ScriptableRenderPass
 
     public DirectionalShadowPass()
     {
-        RegisterShaderPassName("ShaderCaster");
+        RegisterShaderPassName("ShadowCaster");
 
         m_DirectionalShadowMatrices = new Matrix4x4[k_MaxCascades + 1];
         m_CascadeSlices = new ShadowSliceData[k_MaxCascades];
@@ -72,7 +72,7 @@ class DirectionalShadowPass : ScriptableRenderPass
     public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
     {
         Clear();
-
+        RenderDirectionalCascadeShadowmap(ref context, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
     }
 
     public override void FrameCleanup(CommandBuffer cmd)

@@ -28,6 +28,7 @@ public abstract class ScriptableRenderPass
 
     protected DrawRendererSettings CreateDrawRendererSettings(Camera camera, SortFlags sortFlags, RendererConfiguration rendererConfiguration, bool supportDynamicBatching)
     {
+        
         DrawRendererSettings settings = new DrawRendererSettings(camera, m_ShaderPassNames[0]);
         for(int i = 1; i < m_ShaderPassNames.Count; i++)
         {
