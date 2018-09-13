@@ -5,6 +5,7 @@ using System.Text;
 using MZ.LWD;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 
 public class DepthOnlyPass : ScriptableRenderPass
 {
@@ -16,13 +17,18 @@ public class DepthOnlyPass : ScriptableRenderPass
     internal RenderTextureDescriptor desc { get; set; }
     private FilterRenderersSettings opaqueFilterSettings { get; set; }
 
+    public override string GetName()
+    {
+        return k_DepthPrepassTag;
+    }
+
     public void Setup(RenderTextureDescriptor baseDesc, RenderTargetHandle depthAttachmentHandle, int sampleCount)
     {
         this.depthAttachmentHandle = depthAttachmentHandle;
         baseDesc.colorFormat = RenderTextureFormat.Depth;
         baseDesc.depthBufferBits = kDepthBufferBits;
 
-        if(sampleCount > 1)
+        if (sampleCount > 1)
         {
             baseDesc.bindMS = true;
             baseDesc.msaaSamples = sampleCount;
@@ -34,7 +40,7 @@ public class DepthOnlyPass : ScriptableRenderPass
     public DepthOnlyPass()
     {
         RegisterShaderPassName("DepthOnly");
-        opaqueFilterSettings = new FilterRenderersSettings
+        opaqueFilterSettings = new FilterRenderersSettings(true)
         {
             renderQueueRange = RenderQueueRange.opaque,
         };
@@ -44,19 +50,28 @@ public class DepthOnlyPass : ScriptableRenderPass
     {
         var cmd = commandBufferPool.Get(k_DepthPrepassTag);
 
-        {
-            cmd.GetTemporaryRT(depthAttachmentHandle.id, desc, FilterMode.Point);
-            SetRenderTarget(cmd, depthAttachmentHandle.Identifier(), UnityEngine.Rendering.RenderBufferLoadAction.DontCare,
-                 UnityEngine.Rendering.RenderBufferStoreAction.Store, ClearFlag.Depth, Color.black, desc.dimension);
 
-            context.ExecuteCommandBuffer(cmd);
-            cmd.Clear();
+        cmd.GetTemporaryRT(depthAttachmentHandle.id, desc, FilterMode.Point);
+        SetRenderTarget(cmd, depthAttachmentHandle.Identifier(), UnityEngine.Rendering.RenderBufferLoadAction.DontCare,
+                UnityEngine.Rendering.RenderBufferStoreAction.Store, ClearFlag.Depth, Color.black, desc.dimension);
 
-            var drawSetting = CreateDrawRendererSettings(renderingData.cameraData.camera, SortFlags.CommonOpaque, RendererConfiguration.None, renderingData.supportsDynamicBatching);
-            context.DrawRenderers(renderingData.cullResults.visibleRenderers, ref drawSetting, opaqueFilterSettings);
-        }
+        context.ExecuteCommandBuffer(cmd);
+        cmd.Clear();
+
+        var drawSetting = CreateDrawRendererSettings(renderingData.cameraData.camera, SortFlags.CommonOpaque, RendererConfiguration.None, renderingData.supportsDynamicBatching);
+        context.DrawRenderers(renderingData.cullResults.visibleRenderers, ref drawSetting, opaqueFilterSettings);
+
         context.ExecuteCommandBuffer(cmd);
         commandBufferPool.Release(cmd);
+    }
+
+    public override void FrameCleanup(CommandBuffer cmd)
+    {
+        if (depthAttachmentHandle != RenderTargetHandle.CameraTarget)
+        {
+            cmd.ReleaseTemporaryRT(depthAttachmentHandle.id);
+            depthAttachmentHandle = RenderTargetHandle.CameraTarget;
+        }
     }
 }
 
