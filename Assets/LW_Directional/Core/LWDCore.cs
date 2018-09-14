@@ -129,14 +129,23 @@ namespace MZ.LWD
     public static class CoreShadowUtils
     {
         public static bool ExtractDirectionalLightMatrix(ref CullResults cullResults, ref ShadowData shadowData, 
-            int shadowLightIndex, int cascadeIndex, int shadowResolution, float shadowNearPlane, 
+            int shadowLightIndex, int cascadeIndex, int shadowResolution, float shadowNearPlane, float shadowFarPlane,
             out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
         {
             ShadowSplitData splitData;
             Vector3 splitRotio = Vector3.one;
+            if (shadowNearPlane > 1f)
+            {
+                float r = Mathf.Pow(shadowFarPlane / shadowNearPlane, 1f / shadowData.directionalLightCascadeCount);
+                splitRotio = new Vector3(shadowNearPlane * r, shadowNearPlane * r * r, shadowNearPlane * r * r * r) / shadowFarPlane;
+            }
+            else
+            {
+                splitRotio = new Vector3(0.067f, 0.2f, 0.467f);
+            }
+            Debug.Log(splitRotio);
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
                 shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
-
             cascadeSplitDistance = splitData.cullingSphere;
             shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
             shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;

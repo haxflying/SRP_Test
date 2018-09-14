@@ -1,4 +1,6 @@
-﻿Shader "Unlit/OpaqueForward"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Unlit/OpaqueForward"
 {
     Properties
     {
@@ -65,6 +67,7 @@
 
         Pass
         {
+        	Name "ShadowCaster"
             Tags
             {
                 "LightMode" = "ShadowCaster"
@@ -75,25 +78,62 @@
 
             #include "UnityCG.cginc"
 
+            struct appdata
+            {
+            	float4 position : POSITION;
+            	float3 normal : NORMAL;
+            	float2 texcoord : TEXCOORD0;
+            	UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
             struct v2f
             {
-            	V2F_SHADOW_CASTER; 
-                float2 uv : TEXCOORD1;
+                float2 uv : TEXCOORD0;
+                float4 clipPos : SV_POSITION;
             };
+
+            float4 _ShadowBias;
+            float3 _LightDirection;
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-            v2f vert(appdata_full v)
+            float4 GetShadowPositionHClip(appdata v)
+            {
+            	float3 positionWS = mul(unity_ObjectToWorld, v.position).xyz;
+            	float3 normalWS = UnityObjectToWorldNormal(v.normal);
+
+            	float invNdotL = 1.0 - saturate(dot(_LightDirection, normalWS));
+            	float scale = invNdotL * _ShadowBias.y;
+
+            	positionWS = normalWS * scale.xxx + positionWS;
+            	float4 clipPos = mul(UNITY_MATRIX_VP, positionWS);
+
+            	clipPos.z += _ShadowBias.x;
+
+            	#if UNITY_REVERSED_Z
+            	clipPos.z = min(clipPos.z, clipPos.w * _ProjectionParams.y);
+            	#else
+            	clipPos.z = max(clipPos.z, clipPos.w * _ProjectionParams.y);
+            	#endif
+
+            	return clipPos;
+            }
+
+            v2f vert(appdata v)
             {
                 v2f o;
-                TRANSFER_SHADOW_CASTER(o)
+                UNITY_SETUP_INSTANCE_ID(v);
+
+                o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+                //o.clipPos = GetShadowPositionHClip(v);
+                o.clipPos = UnityObjectToClipPos(v.position);
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                SHADOW_CASTER_FRAGMENT(i)
+                return 1;
             }
             ENDCG
         }

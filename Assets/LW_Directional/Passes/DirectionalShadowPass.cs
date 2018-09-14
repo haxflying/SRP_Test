@@ -72,7 +72,7 @@ class DirectionalShadowPass : ScriptableRenderPass
     public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
     {
         Clear();
-        RenderDirectionalCascadeShadowmap(ref context, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
+        RenderDirectionalCascadeShadowmap(ref context, ref renderingData);
     }
 
     public override void FrameCleanup(CommandBuffer cmd)
@@ -98,9 +98,13 @@ class DirectionalShadowPass : ScriptableRenderPass
             m_CascadeSlices[i].Clear();
     }
 
-    void RenderDirectionalCascadeShadowmap(ref ScriptableRenderContext context, ref CullResults cullResults, 
-        ref LightData lightData, ref ShadowData shadowData)
+    void RenderDirectionalCascadeShadowmap(ref ScriptableRenderContext context, ref RenderingData renderingData)
     {
+        LightData lightData = renderingData.lightData;
+        ShadowData shadowData = renderingData.shadowData;
+        CullResults cullResults = renderingData.cullResults;
+        float shadowFarPlane = renderingData.cameraData.maxShadowDistance;
+
         int shadowLightIndex = lightData.mainLightIndex;
         if (shadowLightIndex == -1)
             return;
@@ -139,9 +143,10 @@ class DirectionalShadowPass : ScriptableRenderPass
             for (int i = 0; i < m_ShadowCasterCascadesCount; i++)
             {
                 success = CoreShadowUtils.ExtractDirectionalLightMatrix(ref cullResults, ref shadowData, shadowLightIndex,
-                    i, shadowResolution, shadowNearPlane, out m_CascadeSplitDistances[i], out m_CascadeSlices[i],out view, out proj);
+                    i, shadowResolution, shadowNearPlane, shadowFarPlane, out m_CascadeSplitDistances[i], out m_CascadeSlices[i],out view, out proj);
                 if(success)
                 {
+                    //Debug.Log("Cascade " + i.ToString() + " " + view * proj);
                     settings.splitData.cullingSphere = m_CascadeSplitDistances[i];
                     CoreShadowUtils.SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution);
                     CoreShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[i], ref settings, proj, view);
