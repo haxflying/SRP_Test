@@ -43,6 +43,7 @@ public class ScreenSpaceShadowResolvePass : ScriptableRenderPass
         RenderTargetIdentifier screenSpaceOcclusionTexture = colorAttachmentHandle.Identifier();
         SetRenderTarget(cmd, screenSpaceOcclusionTexture, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
              ClearFlag.All, Color.white, desc.dimension);
+        cmd.Blit(screenSpaceOcclusionTexture, screenSpaceOcclusionTexture, renderer.GetMaterial(MaterialHandles.ScreenSpacceShadow));
 
         context.ExecuteCommandBuffer(cmd);
         commandBufferPool.Release(cmd);

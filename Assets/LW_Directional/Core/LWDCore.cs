@@ -143,7 +143,6 @@ namespace MZ.LWD
             {
                 splitRotio = new Vector3(0.067f, 0.2f, 0.467f);
             }
-            Debug.Log(splitRotio);
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
                 shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
             cascadeSplitDistance = splitData.cullingSphere;

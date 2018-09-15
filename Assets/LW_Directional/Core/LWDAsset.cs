@@ -59,7 +59,7 @@ namespace MZ.LWD
 
     public static class KeywordStrings
     {
-        public static string SoftShadows = "SOFTSHADOW";
-        public static string CascadeShadows = "CASCADED";
+        public static string SoftShadows = "_SOFTSHADOW";
+        public static string CascadeShadows = "_CASCADED";
     }
 }

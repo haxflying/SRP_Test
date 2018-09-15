@@ -67,8 +67,8 @@ public class DufaultRendererSetup : IRendererSetup
         m_DepthOnlyPass.Setup(baseDesc, DepthTexture, 1);
         renderer.EnqueuePass(m_DepthOnlyPass);
 
-        //m_ScreenSpaceShadowPass.Setup(baseDesc, ScreenSpaceShadowmap);
-        //renderer.EnqueuePass(m_ScreenSpaceShadowPass);
+        m_ScreenSpaceShadowPass.Setup(baseDesc, ScreenSpaceShadowmap);
+        renderer.EnqueuePass(m_ScreenSpaceShadowPass);
 
         //m_SetupLWDConstants.Setup();
         //renderer.EnqueuePass(m_SetupLWDConstants);
