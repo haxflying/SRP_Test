@@ -141,18 +141,35 @@ namespace MZ.LWD
             }
             else
             {
-                splitRotio = new Vector3(0.067f, 0.2f, 0.467f);
+                if (shadowData.directionalLightCascadeCount == 1)
+                    splitRotio = new Vector3(1f, 0f, 0f);
+                else if (shadowData.directionalLightCascadeCount == 2)
+                    splitRotio = new Vector3(0.25f, 1f, 0f);
+                else
+                    splitRotio = new Vector3(0.067f, 0.2f, 0.467f);
             }
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
                 shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
             cascadeSplitDistance = splitData.cullingSphere;
-            shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
-            shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
-            shadowSliceData.resolution = shadowResolution;
-            shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
 
             if (shadowData.directionalLightCascadeCount > 1)
+            {
+                shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
+                shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
+                shadowSliceData.resolution = shadowResolution;
+                shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
                 ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes);
+            }
+            else
+            {
+                shadowSliceData.offsetX = 0;
+                shadowSliceData.offsetY = 0;
+                shadowSliceData.resolution = shadowResolution;
+                shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
+                shadowSliceData.shadowTransform = viewMatrix * projMatrix;
+                projMatrix = GetShadowTransform(projMatrix, viewMatrix);
+                //ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes);
+            }
 
             return success;
         }
@@ -169,6 +186,7 @@ namespace MZ.LWD
             sliceTransform.m13 = shadowSliceData.offsetY * oneOverAltaHeight;
 
             shadowSliceData.shadowTransform = sliceTransform * shadowSliceData.shadowTransform;
+
         }
 
         static Matrix4x4 GetShadowTransform(Matrix4x4 proj, Matrix4x4 view)

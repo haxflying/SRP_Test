@@ -61,7 +61,7 @@ class DirectionalShadowPass : ScriptableRenderPass
         DirectionalShadowConstantBuffer._ShadowOffset3 = Shader.PropertyToID("_ShadowOffset3");
         DirectionalShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_ShadowmapSize");
 
-        m_ShadowmapFormat = RenderTextureFormat.Shadowmap;
+        m_ShadowmapFormat = RenderTextureFormat.Depth;
     }
 
     public void Setup(RenderTargetHandle destination)
@@ -146,7 +146,7 @@ class DirectionalShadowPass : ScriptableRenderPass
                     i, shadowResolution, shadowNearPlane, shadowFarPlane, out m_CascadeSplitDistances[i], out m_CascadeSlices[i],out view, out proj);
                 if(success)
                 {
-                    //Debug.Log("Cascade " + i.ToString() + " " + view * proj);
+                    //Debug.Log("Cascade " + i.ToString() + " " + m_ShadowCasterCascadesCount.ToString() +  " " + view * proj);
                     settings.splitData.cullingSphere = m_CascadeSplitDistances[i];
                     CoreShadowUtils.SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution);
                     CoreShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[i], ref settings, proj, view);

@@ -23,7 +23,8 @@
 			#include "UnityCG.cginc"
 
 			sampler2D_float _CameraDepthTexture;
-			UNITY_DECLARE_SHADOWMAP(_DirectionalShadowmapTexture);
+			//UNITY_DECLARE_SHADOWMAP(_DirectionalShadowmapTexture);
+			sampler2D_float _DirectionalShadowmapTexture;
 			float4 _DirectionalShadowmapTexture_TexelSize;
 
 			CBUFFER_START(_DirectionShadowBuffer)
@@ -69,18 +70,23 @@
 
 			inline float3 computeCameraSpacePos(v2f i)
 			{
-				float deviceDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv.xy);
-
+				float deviceDepth = tex2D(_CameraDepthTexture, i.uv.xy);
+				
 				#if UNITY_REVERSED_Z
 				deviceDepth = 1 - deviceDepth;
 				#endif
+
 				float4 clipPos = float4(i.uv.zw, deviceDepth, 1.0);
 				clipPos.xyz = 2 * clipPos.xyz - 1;
+				#if UNITY_UV_STARTS_AT_TOP
+				clipPos.y = -clipPos.y;
+				#endif
 				float4 camPos = mul(unity_CameraInvProjection, clipPos);
 				camPos.xyz /= camPos.w;
 				camPos.z *= -1;
 				return camPos.xyz;
 			}
+
 
 			half computeCascadeIndex(float3 positionWS)
 			{
@@ -101,13 +107,11 @@
 			{
 				float3 vpos = computeCameraSpacePos(i);
 				float3 wpos = mul(unity_CameraToWorld, float4(vpos, 1)).xyz;
-
 				half cascadeIndex = computeCascadeIndex(wpos);
 				float4 coords = mul(_WorldToShadow[cascadeIndex], float4(wpos, 1.0));
-
-				fixed shadow = UNITY_SAMPLE_SHADOW(_DirectionalShadowmapTexture, coords);
-
-				return shadow;
+				fixed shadow = (SAMPLE_DEPTH_TEXTURE(_DirectionalShadowmapTexture, coords.xy));//UNITY_SAMPLE_SHADOW(_DirectionalShadowmapTexture, coords);
+				fixed res = (shadow) > coords.z ? 0 : 1;
+				return res;
 			}
 			ENDCG
 		}
