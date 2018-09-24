@@ -67,7 +67,7 @@ Shader "Unlit/OpaqueForward"
             {
                 i.wnormal = normalize(i.wnormal);
                 i.screenUV.xy /= i.screenUV.w;
-                float diffuse = saturate(dot(_LightDirection, i.wnormal));
+                float diffuse =  saturate(saturate(dot(_LightDirection, i.wnormal)) + 0.1);
                 float attenuation = tex2D(_ScreenSpaceShadowmapTexture, i.screenUV.xy);
                 fixed4 col = tex2D(_MainTex, i.uv) * diffuse * attenuation;
                 // apply fog
@@ -87,6 +87,7 @@ Shader "Unlit/OpaqueForward"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile _ _SOFTSHADOW
 
             #include "UnityCG.cginc"
 
@@ -101,6 +102,9 @@ Shader "Unlit/OpaqueForward"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
+                #if _SOFTSHADOW
+                float4 clipPosStore : TEXCOORD1;
+                #endif
                 float4 clipPos : SV_POSITION;
             };
 
@@ -145,12 +149,21 @@ Shader "Unlit/OpaqueForward"
                 o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
                 o.clipPos = GetShadowPositionHClip(v);
                 //o.clipPos = UnityObjectToClipPos(v.position);
+                #if _SOFTSHADOW
+                o.clipPosStore = o.clipPos;
+                #endif
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
+                #if _SOFTSHADOW
+                i.clipPosStore.xyz /= i.clipPosStore.w;
+                //i.clipPosStore.xyz = i.clipPosStore.xyz * 0.5 + 0.5;
+                return float4(i.clipPosStore.z, i.clipPosStore.z * i.clipPosStore.z, 0, 0);
+                #else
                 return 1;
+                #endif
             }
             ENDCG
         }

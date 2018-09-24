@@ -14,7 +14,10 @@ MonoBehaviour:
   SupportDynamicBatching: 0
   ShadowAltasResolution: 2048
   ShadowDistance: 50
-  ShadowCascades: 1
-  useSoftShadow: 0
+  ShadowCascades: 2
+  useSoftShadow: 1
+  softShadowType: 0
   blitShader: {fileID: 4800000, guid: 4a276adfd6bbcae458798cc6e4d364b3, type: 3}
-  screenSpaceShadow: {fileID: 4800000, guid: 289160f0846aa5940ae169da14f9e346, type: 3}
+  screenSpaceShadowShader: {fileID: 4800000, guid: 289160f0846aa5940ae169da14f9e346,
+    type: 3}
+  blurShader: {fileID: 4800000, guid: f352709817175f349994a687e8ee0d4d, type: 3}

@@ -15,7 +15,8 @@ public sealed class ScriptableRenderer
         m_Materials = new[]
         {
             CoreUtils.CreateEngineMaterial(asset.blitShader),
-            CoreUtils.CreateEngineMaterial(asset.screenSpaceShadow),
+            CoreUtils.CreateEngineMaterial(asset.screenSpaceShadowShader),
+            CoreUtils.CreateEngineMaterial(asset.blurShader),
         };
     }
 

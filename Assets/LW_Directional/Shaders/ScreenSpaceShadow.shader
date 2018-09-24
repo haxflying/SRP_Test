@@ -18,6 +18,8 @@
 			#pragma fragment frag
 			#pragma multi_compile _ _CASCADED
 			#pragma multi_compile _ _SOFTSHADOW
+			#pragma multi_compile _ _VSM
+			#pragma multi_compile _ _PCSS
 
 			#define MAX_SHADOW_CASCADES 4
 			#include "UnityCG.cginc"
@@ -25,7 +27,8 @@
 			sampler2D_float _CameraDepthTexture;
 			//UNITY_DECLARE_SHADOWMAP(_DirectionalShadowmapTexture);
 			sampler2D_float _DirectionalShadowmapTexture;
-			float4 _DirectionalShadowmapTexture_TexelSize;
+			sampler2D_float _BluredDirectionalShadowmapTexture;
+			float4 _DirectionalShadowmapTexture_TexelSize;			
 
 			CBUFFER_START(_DirectionShadowBuffer)
 				float4x4 _WorldToShadow[MAX_SHADOW_CASCADES + 1];
@@ -109,9 +112,29 @@
 				float3 wpos = mul(unity_CameraToWorld, float4(vpos, 1)).xyz;
 				half cascadeIndex = computeCascadeIndex(wpos);
 				float4 coords = mul(_WorldToShadow[cascadeIndex], float4(wpos, 1.0));
-				fixed shadow = (SAMPLE_DEPTH_TEXTURE(_DirectionalShadowmapTexture, coords.xy));//UNITY_SAMPLE_SHADOW(_DirectionalShadowmapTexture, coords);
+
+				#if _SOFTSHADOW 
+				
+				float2 moments = tex2D(_BluredDirectionalShadowmapTexture, coords.xy).rg;
+				if(coords.z >= moments.x)
+					return 1;
+
+				float variance = moments.y - (moments.x * moments.x);
+				variance = max(variance, 0.00002);
+
+				float d_minus_mean = coords.z - moments.x;
+				float p_max = variance / (variance + d_minus_mean * d_minus_mean);
+				return 1 - (1 - p_max) * _ShadowData.x;
+				//fixed shadow = (tex2D(_DirectionalShadowmapTexture, coords.xy));
+				//return coords.z * 0.5 + 0.5;
+				//return shadow;
+				//fixed res = (shadow) > coords.z ? 0 : 1;
+				//return lerp(1, res, _ShadowData.x);
+				#else
+				float shadow = tex2D(_DirectionalShadowmapTexture, coords.xy).r;//UNITY_SAMPLE_SHADOW(_DirectionalShadowmapTexture, coords);
 				fixed res = (shadow) > coords.z ? 0 : 1;
-				return res;
+				return lerp(1, res, _ShadowData.x);
+				#endif
 			}
 			ENDCG
 		}

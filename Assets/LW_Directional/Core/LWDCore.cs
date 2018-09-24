@@ -27,6 +27,7 @@ namespace MZ.LWD
         //Sampling,
         Blit,
         ScreenSpacceShadow,
+        Blur,
     }
 
     public struct RenderingData
@@ -62,6 +63,7 @@ namespace MZ.LWD
         public int directionalLightCascadeCount;
         public int bufferBitCount;
         public bool supportSoftShadows;
+        public SoftShadowType shadowType;
     }
 
     public struct RenderTargetHandle
@@ -151,24 +153,14 @@ namespace MZ.LWD
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
                 shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
             cascadeSplitDistance = splitData.cullingSphere;
+            shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
+            shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
+            shadowSliceData.resolution = shadowResolution;
+            shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
 
             if (shadowData.directionalLightCascadeCount > 1)
-            {
-                shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
-                shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
-                shadowSliceData.resolution = shadowResolution;
-                shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
+            {              
                 ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes);
-            }
-            else
-            {
-                shadowSliceData.offsetX = 0;
-                shadowSliceData.offsetY = 0;
-                shadowSliceData.resolution = shadowResolution;
-                shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
-                shadowSliceData.shadowTransform = viewMatrix * projMatrix;
-                projMatrix = GetShadowTransform(projMatrix, viewMatrix);
-                //ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes);
             }
 
             return success;
