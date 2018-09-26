@@ -104,7 +104,7 @@
 
 				half cascadeIndex = computeCascadeIndex(wpos);
 				float4 coords = mul(_WorldToShadow[cascadeIndex], float4(wpos, 1.0));
-
+				//return coords.z;
 				fixed shadow = UNITY_SAMPLE_SHADOW(_DirectionalShadowmapTexture, coords);
 
 				return shadow;

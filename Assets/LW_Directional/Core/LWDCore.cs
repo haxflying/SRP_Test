@@ -145,14 +145,24 @@ namespace MZ.LWD
             }
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
                 shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
-            cascadeSplitDistance = splitData.cullingSphere;
-            shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
-            shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
-            shadowSliceData.resolution = shadowResolution;
-            shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
 
+            cascadeSplitDistance = splitData.cullingSphere;
             if (shadowData.directionalLightCascadeCount > 1)
+            {
+                shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
+                shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
+                shadowSliceData.resolution = shadowResolution;
+                shadowSliceData.shadowTransform = GetShadowTransform(projMatrix, viewMatrix);
                 ApplySliceTransform(ref shadowSliceData, shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes);
+            }
+            else
+            {
+                Debug.Log("directionalLightCascadeCount");
+                shadowSliceData.offsetX = 0;
+                shadowSliceData.offsetY = 0;
+                shadowSliceData.resolution = shadowResolution * 2;
+                shadowSliceData.shadowTransform = viewMatrix * projMatrix;
+            }
 
             return success;
         }
