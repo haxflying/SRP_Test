@@ -17,6 +17,7 @@ public class DufaultRendererSetup : IRendererSetup
     private SetupLWDConstantsPass m_SetupLWDConstants;
     private FinalBlitPass m_FinalBlitPass;
     private BlurPass m_BlurPass;
+    private MipShadowPass m_MipShadowPass;
 
     private RenderTargetHandle ColorAttachment;
     private RenderTargetHandle DepthAttachment;
@@ -41,6 +42,7 @@ public class DufaultRendererSetup : IRendererSetup
         m_SetupLWDConstants = new SetupLWDConstantsPass();
         m_FinalBlitPass = new FinalBlitPass();
         m_BlurPass = new BlurPass();
+        m_MipShadowPass = new MipShadowPass();
 
         ColorAttachment.Init("_CameraColorTexture");
         DepthAttachment.Init("_CameraDepthAttachment");
@@ -70,8 +72,11 @@ public class DufaultRendererSetup : IRendererSetup
         {
             if(renderingData.shadowData.shadowType == SoftShadowType.VSM)
             {
-                m_BlurPass.Setup(DirectionalShadowmap, BluredDirectionalShadowmap);
-                renderer.EnqueuePass(m_BlurPass);
+                //m_BlurPass.Setup(DirectionalShadowmap, BluredDirectionalShadowmap);
+                //renderer.EnqueuePass(m_BlurPass);
+
+                m_MipShadowPass.Setup(DirectionalShadowmap,BluredDirectionalShadowmap);
+                renderer.EnqueuePass(m_MipShadowPass);
             }
         }
 

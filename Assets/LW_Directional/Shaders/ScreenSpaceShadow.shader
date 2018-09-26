@@ -28,7 +28,9 @@
 			//UNITY_DECLARE_SHADOWMAP(_DirectionalShadowmapTexture);
 			sampler2D_float _DirectionalShadowmapTexture;
 			sampler2D_float _BluredDirectionalShadowmapTexture;
-			float4 _DirectionalShadowmapTexture_TexelSize;			
+			float4 _DirectionalShadowmapTexture_TexelSize;		
+
+			float _MipLevel;	
 
 			CBUFFER_START(_DirectionShadowBuffer)
 				float4x4 _WorldToShadow[MAX_SHADOW_CASCADES + 1];
@@ -116,6 +118,7 @@
 				#if _SOFTSHADOW 
 				
 				float2 moments = tex2D(_BluredDirectionalShadowmapTexture, coords.xy).rg;
+				//return float4(moments, 0, 0);
 				if(coords.z >= moments.x)
 					return 1;
 

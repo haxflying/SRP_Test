@@ -12,8 +12,6 @@ public class VarInstance : MonoBehaviour {
         instance = this;
     }
 
-    [Range(-2f, 2f)]
-    public float scale = 0.5f;
-    [Range(-2f, 2f)]
-    public float translate = 0.5f;
+    [Range(0, 10)]
+    public float mipLevel = 0;
 }
