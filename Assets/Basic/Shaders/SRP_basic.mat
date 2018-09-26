@@ -4,10 +4,10 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: SRP_basic
-  m_Shader: {fileID: 4800000, guid: dd8ca7a19e10ef14d9c2ade99af03acb, type: 3}
+  m_Shader: {fileID: 4800000, guid: 144f883a42d9e2f4b95abd7597274661, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
