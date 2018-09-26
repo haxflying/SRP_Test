@@ -16,12 +16,14 @@ public class DufaultRendererSetup : IRendererSetup
     private SetupForwardRenderingPass m_SetupForwardRenderingPass;
     private SetupLWDConstantsPass m_SetupLWDConstants;
     private FinalBlitPass m_FinalBlitPass;
+    private BlurPass m_BlurPass;
 
     private RenderTargetHandle ColorAttachment;
     private RenderTargetHandle DepthAttachment;
     private RenderTargetHandle DepthTexture;
     private RenderTargetHandle OpaqueColor;
     private RenderTargetHandle DirectionalShadowmap;
+    private RenderTargetHandle BluredDirectionalShadowmap;
     private RenderTargetHandle ScreenSpaceShadowmap;
 
     private bool m_Inited = false;
@@ -38,12 +40,14 @@ public class DufaultRendererSetup : IRendererSetup
         m_SetupForwardRenderingPass = new SetupForwardRenderingPass();
         m_SetupLWDConstants = new SetupLWDConstantsPass();
         m_FinalBlitPass = new FinalBlitPass();
+        m_BlurPass = new BlurPass();
 
         ColorAttachment.Init("_CameraColorTexture");
         DepthAttachment.Init("_CameraDepthAttachment");
         DepthTexture.Init("_CameraDepthTexture");
         OpaqueColor.Init("_CameraOpaqueTexture");
         DirectionalShadowmap.Init("_DirectionalShadowmapTexture");
+        BluredDirectionalShadowmap.Init("_BluredDirectionalShadowmapTexture");
         ScreenSpaceShadowmap.Init("_ScreenSpaceShadowmapTexture");
 
         m_Inited = true;
@@ -59,8 +63,17 @@ public class DufaultRendererSetup : IRendererSetup
         RenderTextureDescriptor shadowDesc = baseDesc;
         shadowDesc.dimension = TextureDimension.Tex2D;
 
-        m_DirectionalShadowPass.Setup(DirectionalShadowmap);
+        m_DirectionalShadowPass.Setup(DirectionalShadowmap, ref renderingData.shadowData);
         renderer.EnqueuePass(m_DirectionalShadowPass);
+
+        if(renderingData.shadowData.supportSoftShadows)
+        {
+            if(renderingData.shadowData.shadowType == SoftShadowType.VSM)
+            {
+                m_BlurPass.Setup(DirectionalShadowmap, BluredDirectionalShadowmap);
+                renderer.EnqueuePass(m_BlurPass);
+            }
+        }
 
         renderer.EnqueuePass(m_SetupForwardRenderingPass);
 

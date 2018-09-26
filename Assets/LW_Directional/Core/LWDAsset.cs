@@ -16,10 +16,12 @@ namespace MZ.LWD
         public float ShadowDistance = 50.0f;
         public ShadowCascades ShadowCascades = ShadowCascades.FOUR_CASCADES;
         public bool useSoftShadow = false;
+        public SoftShadowType softShadowType;
 
         [Header("Shaders")]
         public Shader blitShader;
-        public Shader screenSpaceShadow;
+        public Shader screenSpaceShadowShader;
+        public Shader blurShader;
 
 #if UNITY_EDITOR
         [MenuItem("Assets/Create/Rendering/LWD Asset")]
@@ -57,9 +59,16 @@ namespace MZ.LWD
         _4096 = 4096
     }
 
+    public enum SoftShadowType
+    {
+        VSM, PCSS
+    }
+
     public static class KeywordStrings
     {
         public static string SoftShadows = "_SOFTSHADOW";
         public static string CascadeShadows = "_CASCADED";
+        public static string VSM = "_VSM";
+        public static string PCSS = "_PCSS";
     }
 }

@@ -14,6 +14,7 @@ namespace MZ.LWD
         private static float ShadowDistance = 50.0f;
         private static ShadowCascades ShadowCascades = ShadowCascades.FOUR_CASCADES;
         private static bool useSoftShadow = false;
+        private static SoftShadowType softShadowType;
 
         private static IRendererSetup m_DefaultRenderSetup;
         private static IRendererSetup defaultRenderSetup
@@ -39,6 +40,7 @@ namespace MZ.LWD
             ShadowDistance = asset.ShadowDistance;
             ShadowCascades = asset.ShadowCascades;
             useSoftShadow = asset.useSoftShadow;
+            softShadowType = asset.softShadowType;
 
             m_Renderer = new ScriptableRenderer(asset);
         }
@@ -178,6 +180,7 @@ namespace MZ.LWD
             }
 
             shadowData.supportSoftShadows = useSoftShadow;
+            shadowData.shadowType = softShadowType;
             shadowData.bufferBitCount = 16;
         }
 

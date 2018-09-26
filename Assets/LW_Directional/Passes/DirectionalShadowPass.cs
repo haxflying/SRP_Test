@@ -61,12 +61,23 @@ class DirectionalShadowPass : ScriptableRenderPass
         DirectionalShadowConstantBuffer._ShadowOffset3 = Shader.PropertyToID("_ShadowOffset3");
         DirectionalShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_ShadowmapSize");
 
-        m_ShadowmapFormat = RenderTextureFormat.Shadowmap;
+        m_ShadowmapFormat = RenderTextureFormat.Depth;
     }
 
-    public void Setup(RenderTargetHandle destination)
+    public void Setup(RenderTargetHandle destination, ref ShadowData shadowData)
     {
         this.destination = destination;
+        if(shadowData.supportSoftShadows)
+        {
+            if(shadowData.shadowType == SoftShadowType.VSM)
+            {
+                m_ShadowmapFormat = RenderTextureFormat.RG32;
+            }
+        }
+        else
+        {
+            m_ShadowmapFormat = RenderTextureFormat.Depth;
+        }
     }
 
     public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
@@ -136,7 +147,9 @@ class DirectionalShadowPass : ScriptableRenderPass
             m_DirectionalShadowmapTexture.filterMode = FilterMode.Bilinear;
             m_DirectionalShadowmapTexture.wrapMode = TextureWrapMode.Clamp;
 
-            SetRenderTarget(cmd, m_DirectionalShadowmapTexture, RenderBufferLoadAction.DontCare,
+            cmd.GetTemporaryRT(destination.id, m_DirectionalShadowmapTexture.descriptor);
+
+            SetRenderTarget(cmd, destination.Identifier(), RenderBufferLoadAction.DontCare,
                 RenderBufferStoreAction.Store, ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
 
             bool success = false;
@@ -146,7 +159,7 @@ class DirectionalShadowPass : ScriptableRenderPass
                     i, shadowResolution, shadowNearPlane, shadowFarPlane, out m_CascadeSplitDistances[i], out m_CascadeSlices[i],out view, out proj);
                 if(success)
                 {
-                    //Debug.Log("Cascade " + i.ToString() + " " + view * proj);
+                    //Debug.Log("Cascade " + i.ToString() + " " + m_ShadowCasterCascadesCount.ToString() +  " " + view * proj);
                     settings.splitData.cullingSphere = m_CascadeSplitDistances[i];
                     CoreShadowUtils.SetupShadowCasterConstants(cmd, ref shadowLight, proj, shadowResolution);
                     CoreShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[i], ref settings, proj, view);
@@ -177,7 +190,7 @@ class DirectionalShadowPass : ScriptableRenderPass
 
         float invShadowAltasRes = 1f / shadowData.directionalShadowAltasRes;
         float invHalfShadowAltaRes = 0.5f * invShadowAltasRes;
-        cmd.SetGlobalTexture(destination.id, m_DirectionalShadowmapTexture);
+        //cmd.SetGlobalTexture(destination.id, m_DirectionalShadowmapTexture);
         cmd.SetGlobalMatrixArray(DirectionalShadowConstantBuffer._WorldToShadow, m_DirectionalShadowMatrices);
         cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0f, 0f, 0f));
         cmd.SetGlobalVector(DirectionalShadowConstantBuffer._DirShadowSplitSpheres0, m_CascadeSplitDistances[0]);
@@ -195,6 +208,8 @@ class DirectionalShadowPass : ScriptableRenderPass
         cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowOffset3, new Vector4(invHalfShadowAltaRes, invHalfShadowAltaRes, 0f, 0f));
         cmd.SetGlobalVector(DirectionalShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowAltasRes, invShadowAltasRes,
             shadowData.directionalShadowAltasRes, shadowData.directionalShadowAltasRes));
+
+        CoreUtils.SetKeyword(cmd, KeywordStrings.SoftShadows, shadowData.supportSoftShadows && shadowLight.light.shadows == LightShadows.Soft);
     }
 }
 
