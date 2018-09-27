@@ -69,7 +69,8 @@ Shader "Unlit/OpaqueForward"
                 i.screenUV.xy /= i.screenUV.w;
                 float diffuse =  saturate(saturate(dot(_LightDirection, i.wnormal)) + 0.1);
                 float attenuation = tex2D(_ScreenSpaceShadowmapTexture, i.screenUV.xy);
-                fixed4 col = tex2D(_MainTex, i.uv) * diffuse * attenuation;
+                attenuation = max(0.1, attenuation);
+                fixed4 col = tex2D(_MainTex, i.uv) * min(diffuse, attenuation);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;

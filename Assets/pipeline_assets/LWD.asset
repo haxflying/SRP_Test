@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Name: LWD
   m_EditorClassIdentifier: 
   SupportDynamicBatching: 0
-  ShadowAltasResolution: 2048
+  ShadowAltasResolution: 1024
   ShadowDistance: 50
   ShadowCascades: 2
   useSoftShadow: 1
