@@ -30,27 +30,20 @@ Shader "Unlit/OpaqueForward"
             #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
-            #include "Lighting.cginc"
-            #include "UnityPBSLighting.cginc"
-            #include "AutoLight.cginc"
 
             struct appdata
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
-                float3 normal : NORMAL;                             
+                float3 normal : NORMAL;
             };
 
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                half4 wnormal : TEXCOORD1;
-                half4 eyeVec : TEXCOORD2; // w: grazingTerm
-                half4 ambientOrLightmapUV : TEXCOORD3; //SH or Lightmap UV
-                UNITY_FOG_COORDS_PACKED(4, half4) //x: fagCoord, yzw: reflectVec
-
-                float4 screenUV : TEXCOORD5;
-                float3 worldPos : TEXCOORD6;
+                UNITY_FOG_COORDS(1)
+                float3 wnormal : TEXCOORD2;
+                float4 screenUV : TEXCOORD3;
                 float4 vertex : SV_POSITION;
             };
 
@@ -62,24 +55,11 @@ Shader "Unlit/OpaqueForward"
             v2f vert(appdata v)
             {
                 v2f o;
-                UNITY_INITIALIZE_OUTPUT(v2f, o);
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o, o.vertex);
-                half3 wnormal = UnityObjectToWorldNormal(v.normal);
+                o.wnormal = UnityObjectToWorldNormal(v.normal);
                 o.screenUV = ComputeScreenPos(o.vertex);
-                o.wnormal.xyz = wnormal;
-
-                float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-                half3 eyeVec = normalize(worldPos.xyz - _WorldSpaceCameraPos);
-                o.eyeVec.xyz = eyeVec;
-                o.worldPos = worldPos;
-
-                //o.ambientOrLightmapUV = VertexGIForward(v, worldPos, wnormal);
-                o.fogCoord.yzw = reflect(eyeVec, wnormal);
-                //o.wnormal.w = Pow4(1 - saturate(dot(wnormal, -eyeVec)));//fresnel term
-
-                UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
 
@@ -89,16 +69,8 @@ Shader "Unlit/OpaqueForward"
                 i.screenUV.xy /= i.screenUV.w;
                 float diffuse =  saturate(saturate(dot(_LightDirection, i.wnormal)) + 0.1);
                 float attenuation = tex2D(_ScreenSpaceShadowmapTexture, i.screenUV.xy);
-                fixed4 col = tex2D(_MainTex, i.uv) * diffuse * attenuation;
-
-                UnityGI gi;
-                UNITY_INITIALIZE_OUTPUT(UnityGI, gi);
-                gi.indirect.diffuse = 0;
-                gi.indirect.specular = 0;
-                gi.light.color = _LightColor0.rgb * attenuation;
-                gi.light.dir = _LightDirection;
-
-                
+                attenuation = max(0.1, attenuation);
+                fixed4 col = tex2D(_MainTex, i.uv) * min(diffuse, attenuation);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;

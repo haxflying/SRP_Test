@@ -130,6 +130,7 @@ namespace MZ.LWD
 
     public static class CoreShadowUtils
     {
+
         public static bool ExtractDirectionalLightMatrix(ref CullResults cullResults, ref ShadowData shadowData, 
             int shadowLightIndex, int cascadeIndex, int shadowResolution, float shadowNearPlane, float shadowFarPlane,
             out Vector4 cascadeSplitDistance, out ShadowSliceData shadowSliceData, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
@@ -152,6 +153,17 @@ namespace MZ.LWD
             }
             bool success = cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowLightIndex, cascadeIndex,
                 shadowData.directionalLightCascadeCount, splitRotio, shadowResolution, shadowNearPlane, out viewMatrix, out projMatrix, out splitData);
+
+            //Debug.Log("Cascade Index:" + cascadeIndex + "\n view \n" + viewMatrix + "\n proj \n" + projMatrix);
+
+            if (VarInstance.instance.useCustomMatrix)
+            {
+                ComputeDirectionalShadowMatrices_MZ(ref cullResults, shadowLightIndex, cascadeIndex, shadowData.directionalLightCascadeCount, ref splitData,
+                    shadowNearPlane, shadowFarPlane, out viewMatrix, out projMatrix);
+            }
+
+            //Debug.Log("Cascade Index:" + cascadeIndex + "\n view \n" + viewMatrix + "\n proj \n" + projMatrix);
+
             cascadeSplitDistance = splitData.cullingSphere;
             shadowSliceData.offsetX = (cascadeIndex % 2) * shadowResolution;
             shadowSliceData.offsetY = (cascadeIndex / 2) * shadowResolution;
@@ -164,6 +176,23 @@ namespace MZ.LWD
             }
 
             return success;
+        }
+
+        public static void ComputeDirectionalShadowMatrices_MZ(ref CullResults cullResults, int shadowLightIndex, int cascadeIndex,
+            int cascadeCount, ref ShadowSplitData splitData , float n, float f,
+            out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix)
+        {
+            var shadowLight = cullResults.visibleLights[shadowLightIndex];
+            viewMatrix = shadowLight.light.transform.worldToLocalMatrix;
+
+            float radiu = splitData.cullingSphere.w;
+            Vector3 center = splitData.cullingSphere;
+            
+            projMatrix = new Matrix4x4(
+                new Vector4(1 / radiu, 0, 0, 0),
+                new Vector4(0, 1 / radiu, 0, 0),
+                new Vector4(0, 0, 1 / (f - n), 0),
+                new Vector4(0, 0, - n / (f - n), 1));
         }
 
         public static void ApplySliceTransform(ref ShadowSliceData shadowSliceData, int altaWidth, int altaHeight)

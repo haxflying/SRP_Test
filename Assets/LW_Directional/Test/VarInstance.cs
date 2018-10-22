@@ -14,4 +14,6 @@ public class VarInstance : MonoBehaviour {
 
     [Range(0, 10)]
     public float mipLevel = 0;
+
+    public bool useCustomMatrix = false;
 }
